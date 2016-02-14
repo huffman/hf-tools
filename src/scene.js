@@ -1,22 +1,35 @@
+function getContentURLs() {
+    var content = {
+        props: [],
+        avatars: [],
+        sets: []
+    };
+
+    var req = new XMLHttpRequest();
+    var BASE_S3_URL = "http://hifi-content.s3.amazonaws.com/";
+    var PREFIX = "ozan/dev/gallery";
+    req.open('GET', BASE_S3_URL + '?prefix=' + PREFIX, false);
+    req.send();
+
+    if (req.status != 200) {
+        print("Failure to get list of resources: " + req.statusText);
+    } else {
+        var re = new RegExp('<Key>(ozan/dev/gallery/(avatars|props|sets)/[A-Za-z0-9_\/]+\.fbx)</Key>', 'g');
+        var res = null;
+        while (res = re.exec(req.responseText)) {
+            var path = res[1];
+            var type = res[2];
+            print(type, path);
+            content[type].push(BASE_S3_URL + path)
+        }
+    }
+
+    return content;
+}
+
 var BASE_URL = "https://hifi-content.s3.amazonaws.com/ozan/dev/gallery";
 var SCENE_NAME = "OZAN SET";
-var models = {
-    props: [
-        BASE_URL + "/props/clouds/clouds.fbx",
-        BASE_URL + "/props/gun_nailgun/gun_nailgun.fbx",
-        BASE_URL + "/props/gun_shotgun/gun_shotgun.fbx",
-        BASE_URL + "/props/tree_cypress/tree_cypress.fbx",
-        BASE_URL + "/props/tree_pine/tree_pine.fbx",
-    ],
-    avatars: [
-        BASE_URL + "/avatars/dougland/dougland.fbx",
-        BASE_URL + "/avatars/huffman/huffman.fbx",
-    ],
-    sets: [
-        BASE_URL + "/sets/dojo/dojo.fbx",
-        BASE_URL + "/sets/tuscany/tuscany.fbx",
-    ]
-};
+models = getContentURLs();
 
 var entityIDs = Entities.findEntities({ x: 0, y: 0, z: 0 }, 500);
 for (var i = 0; i < entityIDs.length; ++i) {
